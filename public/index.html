@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quoridor Online</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <main id="lobby" class="lobby-container">
+        <h1>Quoridor Online</h1>
+        
+        <button id="rules-btn" class="rules-button">📜 Ver Regras</button>
+
+        <div class="lobby-forms">
+            <form id="create-room-form" class="lobby-form">
+                <h2>Criar uma Sala</h2>
+                <input type="text" id="create-player-name" placeholder="Seu Nome" required maxlength="12">
+                <input type="text" id="create-room-name" placeholder="Nome da Sala" required>
+                <input type="password" id="create-room-password" placeholder="Senha da Sala" required>
+                <button type="submit">Criar</button>
+            </form>
+            <form id="join-room-form" class="lobby-form">
+                <h2>Entrar em uma Sala</h2>
+                <input type="text" id="join-player-name" placeholder="Seu Nome" required maxlength="12">
+                <input type="text" id="join-room-name" placeholder="Nome da Sala" required>
+                <input type="password" id="join-room-password" placeholder="Senha da Sala" required>
+                <button type="submit">Entrar</button>
+            </form>
+        </div>
+
+        <div id="rules-modal" class="modal-overlay hidden">
+            <div class="modal-content">
+                <button id="modal-close-btn" class="modal-close-btn">&times;</button>
+                <h2>Regras do Quoridor</h2>
+                <ul>
+                    <li><strong>Objetivo:</strong> Ser o primeiro jogador a alcançar a linha de partida do oponente.</li>
+                    <li><strong>No seu turno, escolha UMA ação:</strong>
+                        <ul>
+                            <li><strong>Mover seu peão:</strong> Mova uma casa na horizontal ou vertical (nunca na diagonal).</li>
+                            <li><strong>Colocar uma barreira:</strong> Posicione uma barreira entre as casas para bloquear o caminho.</li>
+                        </ul>
+                    </li>
+                    <li><strong>Regras das Barreiras:</strong>
+                        <ul>
+                            <li>Cada barreira bloqueia o espaço de duas casas.</li>
+                            <li>Você começa com 10 barreiras. Use-as com sabedoria!</li>
+                            <li><strong>Regra Crucial:</strong> É proibido colocar uma barreira que feche completamente o último caminho do seu oponente até a linha de chegada dele.</li>
+                        </ul>
+                    </li>
+                    <li><strong>Regras de Movimento:</strong>
+                        <ul>
+                            <li>Se seu peão e o do oponente estiverem frente a frente, você pode pular sobre ele em seu turno.</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </main>
+
+    <main id="game-area" class="game-container hidden">
+        <h1 id="room-title">Nome da Sala</h1>
+
+        <div class="game-info">
+            <div class="player-info" id="player1-info">
+                <h2 id="p1-name">Aguardando...</h2>
+                <p>Barreiras: <span id="p1-walls">10</span></p>
+            </div>
+            <div class="turn-status" id="turn-status">
+                <p>Aguardando oponente...</p>
+            </div>
+            <div class="player-info" id="player2-info">
+                <h2 id="p2-name">Aguardando...</h2>
+                <p>Barreiras: <span id="p2-walls">10</span></p>
+            </div>
+        </div>
+
+        <div id="board-container">
+            <div id="board"></div>
+        </div>
+        
+        <div class="controls">
+            <button id="restart-button">Sair da Sala</button>
+        </div>
+
+        <div id="victory-popup" class="hidden">
+            <div class="popup-content">
+                <h2>Vitória!</h2>
+                <p id="victory-message">Parabéns, Jogador 1 venceu!</p>
+            </div>
+        </div>
+    </main>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+{
+  "name": "quoridor-online",
+  "version": "1.0.0",
+  "description": "Jogo Quoridor multiplayer online",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [
+    "quoridor",
+    "jogo",
+    "online",
+    "socket.io"
+  ],
+  "author": "Edu",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "socket.io": "^4.7.5"
+  },
+  "engines": {
+    "node": "18.x"
+  }
+}
