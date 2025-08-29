@@ -137,7 +137,7 @@ body {
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
     position: relative;
     width: 95%;
-    max-width: 900px; /* Aumentado para acomodar os painéis de equipe */
+    max-width: 600px; /* Aumentado para acomodar os painéis de equipe */
     box-sizing: border-box;
     margin: 1rem auto;
 }
