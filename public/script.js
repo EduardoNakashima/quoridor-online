@@ -1,38 +1,66 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Conecta-se ao servidor
     const socket = io();
 
     // --- VARIÁVEIS DE ESTADO DO CLIENTE ---
     let gameState = {};
     let myPlayerId = null;
     let currentRoomName = '';
+    let selectedMode = null;
 
     // --- ELEMENTOS DO DOM ---
+    const modeSelectionEl = document.getElementById('mode-selection');
     const lobbyEl = document.getElementById('lobby');
+    const gameAreaEl = document.getElementById('game-area');
+
+    const modeButtons = document.querySelectorAll('.mode-button');
+    const lobbyTitleEl = document.getElementById('lobby-title');
     const createRoomForm = document.getElementById('create-room-form');
     const joinRoomForm = document.getElementById('join-room-form');
-    const gameAreaEl = document.getElementById('game-area');
+    const backButton = document.getElementById('back-to-mode-selection-btn');
+
     const roomTitleEl = document.getElementById('room-title');
     const p1NameEl = document.getElementById('p1-name');
     const p2NameEl = document.getElementById('p2-name');
+    const p3NameEl = document.getElementById('p3-name');
+    const p4NameEl = document.getElementById('p4-name');
     const p1WallsEl = document.getElementById('p1-walls');
     const p2WallsEl = document.getElementById('p2-walls');
+    const p3WallsEl = document.getElementById('p3-walls');
+    const p4WallsEl = document.getElementById('p4-walls');
+    
     const turnStatusEl = document.getElementById('turn-status').querySelector('p');
     const boardEl = document.getElementById('board');
     const boardContainerEl = document.getElementById('board-container');
     const restartButton = document.getElementById('restart-button');
-    const victoryPopupEl = document.getElementById('victory-popup');
-    const rulesBtn = document.getElementById('rules-btn');
-    const rulesModal = document.getElementById('rules-modal');
-    const modalCloseBtn = document.getElementById('modal-close-btn');
 
-    // --- LÓGICA DO LOBBY ---
+    const victoryPopupEl = document.getElementById('victory-popup');
+    const victoryTitleEl = document.getElementById('victory-title');
+    const victoryMessageEl = document.getElementById('victory-message');
+
+    // --- LÓGICA DE UI INICIAL E LOBBY ---
+    modeButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            selectedMode = button.dataset.mode;
+            lobbyTitleEl.textContent = `Modo ${selectedMode.replace('v', ' vs ')}`;
+            
+            modeSelectionEl.classList.add('hidden');
+            lobbyEl.classList.remove('hidden');
+        });
+    });
+
+    backButton.addEventListener('click', () => {
+        lobbyEl.classList.add('hidden');
+        modeSelectionEl.classList.remove('hidden');
+    });
+
     createRoomForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const playerName = document.getElementById('create-player-name').value.trim();
         const roomName = document.getElementById('create-room-name').value.trim();
         const password = document.getElementById('create-room-password').value;
         if (playerName && roomName && password) {
-            socket.emit('createRoom', { roomName, password, playerName });
+            socket.emit('createRoom', { roomName, password, playerName, gameMode: selectedMode });
             currentRoomName = roomName;
         }
     });
@@ -48,24 +76,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    restartButton.addEventListener('click', () => { window.location.reload(); });
-
-    // Event Listeners para o Modal de Regras
-    rulesBtn.addEventListener('click', () => {
-        rulesModal.classList.remove('hidden');
+    restartButton.addEventListener('click', () => {
+        window.location.reload();
     });
 
-    modalCloseBtn.addEventListener('click', () => {
-        rulesModal.classList.add('hidden');
-    });
-    
-    rulesModal.addEventListener('click', (e) => {
-        if (e.target === rulesModal) {
-            rulesModal.classList.add('hidden');
-        }
-    });
-
-    // --- SOCKET.IO LISTENERS ---
+    // --- SOCKET.IO LISTENERS (Ouvindo o Servidor) ---
     socket.on('error', (message) => { alert(`Erro: ${message}`); });
 
     socket.on('joinSuccess', ({ roomName }) => {
@@ -75,12 +90,11 @@ document.addEventListener('DOMContentLoaded', () => {
         window.addEventListener('resize', createBoard);
     });
 
-    socket.on('playerUpdate', ({ players, playerOrder }) => {
+    socket.on('playerUpdate', ({ players, playerOrder, gameMode }) => {
+        updatePlayerList(players, playerOrder, gameMode);
+        
         const myIndex = playerOrder.indexOf(socket.id);
         myPlayerId = myIndex + 1;
-        const playerNames = playerOrder.map(id => players[id] ? players[id].playerName : '...');
-        p1NameEl.textContent = playerNames[0] || 'Aguardando...';
-        p2NameEl.textContent = playerNames[1] || 'Aguardando...';
     });
     
     socket.on('gameStateUpdate', (newGameState) => {
@@ -88,64 +102,64 @@ document.addEventListener('DOMContentLoaded', () => {
         renderGame();
     });
 
-    // --- RENDERIZAÇÃO E LÓGICA DE CLIQUE (CLIENTE) ---
-    function renderGame() {
-        if (!gameState.players) return;
-        createBoard();
-        const { players, currentPlayerIndex, gameOver, winner } = gameState;
-        players.forEach((player, index) => {
-            const { row, col } = player.pawnPosition;
-            const cell = document.querySelector(`.cell[data-row='${row}'][data-col='${col}']`);
-            const pawn = document.createElement('div');
-            pawn.classList.add('pawn', `pawn${index + 1}`);
-            if(cell) cell.appendChild(pawn);
-        });
-        gameState.horizontalWalls.forEach(wall => {
-            const wallEl = document.querySelector(`.wall-space[data-type='h'][data-row='${wall.row}'][data-col='${wall.col}']`);
-            if (wallEl) wallEl.classList.add('placed', `p${wall.playerId}-wall`);
-        });
-        gameState.verticalWalls.forEach(wall => {
-            const wallEl = document.querySelector(`.wall-space[data-type='v'][data-row='${wall.row}'][data-col='${wall.col}']`);
-            if (wallEl) wallEl.classList.add('placed', `p${wall.playerId}-wall`);
-        });
-        p1WallsEl.textContent = players[0].wallsLeft;
-        p2WallsEl.textContent = players[1].wallsLeft;
-        if (gameOver) {
-            turnStatusEl.textContent = `Jogador ${winner} Venceu!`;
-            if (winner === myPlayerId) {
-                showVictoryPopup(winner);
-            }
-        } else {
-            const isMyTurn = (currentPlayerIndex + 1) === myPlayerId;
-            const currentPlayerPanel = document.getElementById(`player${currentPlayerIndex + 1}-info`);
-            const otherPlayerPanel = document.getElementById(`player${((currentPlayerIndex + 1) % 2) + 1}-info`);
+    // --- FUNÇÕES DE RENDERIZAÇÃO E UI ---
+    function updatePlayerList(players, playerOrder, gameMode) {
+        const playerNames = playerOrder.map(id => players[id] ? players[id].playerName : 'Aguardando...');
+        
+        document.getElementById('player3-info').classList.toggle('hidden', gameMode !== '2v2');
+        document.getElementById('player4-info').classList.toggle('hidden', gameMode !== '2v2');
 
-            turnStatusEl.textContent = isMyTurn ? "É a sua vez!" : `Aguardando ${players[currentPlayerIndex].playerName}...`;
-            document.body.style.backgroundColor = isMyTurn ? '#f0fff0' : 'var(--color-bg)';
-            if (currentPlayerPanel) currentPlayerPanel.style.transform = 'scale(1.05)';
-            if (otherPlayerPanel) otherPlayerPanel.style.transform = 'scale(1)';
+        p1NameEl.textContent = playerNames[0] || 'Aguardando...';
+        p2NameEl.textContent = playerNames[1] || 'Aguardando...';
+        if (gameMode === '2v2') {
+            p3NameEl.textContent = playerNames[2] || 'Aguardando...';
+            p4NameEl.textContent = playerNames[3] || 'Aguardando...';
         }
     }
 
-    function handleCellClick(e) {
-        if (gameState.gameOver || !e.target.closest('.cell')) return;
-        const cell = e.target.closest('.cell');
-        const move = {
-            row: parseInt(cell.dataset.row),
-            col: parseInt(cell.dataset.col)
-        };
-        socket.emit('playerMove', { roomName: currentRoomName, move });
-    }
+    function renderGame() {
+        if (!gameState.players) return;
+        
+        createBoard();
+        
+        const { players, currentPlayerIndex, gameOver, winner, mode } = gameState;
+        
+        players.forEach((player) => {
+            const { row, col } = player.pawnPosition;
+            const cell = document.querySelector(`.cell[data-row='${row}'][data-col='${col}']`);
+            const pawn = document.createElement('div');
+            pawn.classList.add('pawn', `pawn${player.id}`);
+            if(cell) cell.appendChild(pawn);
+        });
+        
+        gameState.horizontalWalls.forEach(wall => {
+            const wallEl = document.querySelector(`.wall-space[data-type='h'][data-row='${wall.row}'][data-col='${wall.col}']`);
+            if (wallEl) wallEl.classList.add('placed', `${wall.team}-wall`);
+        });
+        gameState.verticalWalls.forEach(wall => {
+            const wallEl = document.querySelector(`.wall-space[data-type='v'][data-row='${wall.row}'][data-col='${wall.col}']`);
+            if (wallEl) wallEl.classList.add('placed', `${wall.team}-wall`);
+        });
 
-    function handleWallClick(e) {
-        if (gameState.gameOver) return;
-        const wallSpace = e.target;
-        const wall = {
-            type: wallSpace.dataset.type,
-            row: parseInt(wallSpace.dataset.row),
-            col: parseInt(wallSpace.dataset.col)
-        };
-        socket.emit('placeWall', { roomName: currentRoomName, wall });
+        p1WallsEl.textContent = players[0].wallsLeft;
+        p2WallsEl.textContent = players[1].wallsLeft;
+        if(mode === '2v2') {
+            if (players[2]) p3WallsEl.textContent = players[2].wallsLeft;
+            if (players[3]) p4WallsEl.textContent = players[3].wallsLeft;
+        }
+
+        if (gameOver) {
+            turnStatusEl.textContent = `Fim de Jogo!`;
+            showVictoryPopup(winner);
+        } else {
+            const currentPlayer = players[currentPlayerIndex];
+            const isMyTurn = (currentPlayerIndex + 1) === myPlayerId;
+            turnStatusEl.textContent = isMyTurn ? "É a sua vez!" : `Aguardando ${currentPlayer.playerName}...`;
+            
+            document.querySelectorAll('.player-info').forEach(el => el.style.transform = 'scale(1)');
+            const currentPlayerPanel = document.getElementById(`player${currentPlayerIndex + 1}-info`);
+            if (currentPlayerPanel) currentPlayerPanel.style.transform = 'scale(1.05)';
+        }
     }
     
     function createBoard() {
@@ -157,6 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
         boardEl.style.gridTemplateColumns = `repeat(9, ${cellSize}px)`;
         boardEl.style.gridTemplateRows = `repeat(9, ${cellSize}px)`;
         boardEl.style.gap = `${wallGap}px`;
+
         for (let i = 0; i < 81; i++) {
             const cell = document.createElement('div');
             cell.classList.add('cell');
@@ -164,6 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
             cell.dataset.col = i % 9;
             boardEl.appendChild(cell);
         }
+        
         for (let row = 0; row < 8; row++) {
             for (let col = 0; col < 8; col++) {
                 const hWall = document.createElement('div');
@@ -175,6 +191,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 hWall.style.left = `${col * cellSize + (col + 1) * wallGap}px`;
                 hWall.addEventListener('click', handleWallClick);
                 boardEl.appendChild(hWall);
+
                 const vWall = document.createElement('div');
                 vWall.classList.add('wall-space');
                 vWall.dataset.type = 'v'; vWall.dataset.row = row; vWall.dataset.col = col;
@@ -188,14 +205,36 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         boardEl.addEventListener('click', handleCellClick);
     }
-
-    function showVictoryPopup(winnerId) {
-        const victoryMessageEl = victoryPopupEl.querySelector('#victory-message');
-        const winnerName = (winnerId === 1) ? p1NameEl.textContent : p2NameEl.textContent;
-        victoryMessageEl.textContent = `Parabéns, ${winnerName} venceu!`;
+    
+    function showVictoryPopup(winningTeam) {
+        const teamName = winningTeam.charAt(0).toUpperCase() + winningTeam.slice(1);
+        victoryTitleEl.textContent = `Vitória do Time ${teamName}!`;
+        victoryMessageEl.textContent = `O Time ${teamName} alcançou o objetivo!`;
         victoryPopupEl.classList.remove('hidden');
         setTimeout(() => {
             victoryPopupEl.classList.add('hidden');
         }, 5000);
+    }
+
+    // --- EMISSORES DE EVENTOS (Enviando ações para o Servidor) ---
+    function handleCellClick(e) {
+        if (gameState.gameOver || !e.target.closest('.cell')) return;
+        const cell = e.target.closest('.cell');
+        const move = {
+            row: parseInt(cell.dataset.row),
+            col: parseInt(cell.dataset.col)
+        };
+        socket.emit('playerMove', { roomName: currentRoomName, move });
+    }
+
+    function handleWallClick(e) {
+        if (gameState.gameOver || !e.target.classList.contains('wall-space')) return;
+        const wallSpace = e.target;
+        const wall = {
+            type: wallSpace.dataset.type,
+            row: parseInt(wallSpace.dataset.row),
+            col: parseInt(wallSpace.dataset.col)
+        };
+        socket.emit('placeWall', { roomName: currentRoomName, wall });
     }
 });

@@ -3,8 +3,10 @@
     --color-board: #DCC9A3; 
     --color-cell: #F2EAD3; 
     --color-accent: #A37B73; 
-    --color-pawn1: #DB5A42; 
-    --color-pawn2: #3B778C; 
+    --color-pawn1: #DB5A42; /* Vermelho Time 1 */
+    --color-pawn2: #3B778C; /* Azul Time 2 */
+    --color-pawn3: #ff8a75; /* Vermelho (parceiro) */
+    --color-pawn4: #6bb3cb; /* Azul (parceiro) */
     --color-text: #4A4A4A; 
     --border-radius: 12px;
 }
@@ -22,6 +24,8 @@ body {
     display: none !important;
 }
 
+/* --- Telas de Lobby e Seleção de Modo --- */
+
 .lobby-container {
     display: flex;
     flex-direction: column;
@@ -30,6 +34,49 @@ body {
     min-height: 100vh;
     padding: 2rem;
     box-sizing: border-box;
+}
+
+.mode-options {
+    display: flex;
+    gap: 2rem;
+    margin-top: 2rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.mode-button {
+    background-color: #fff;
+    border: 2px solid var(--color-board);
+    border-radius: var(--border-radius);
+    padding: 2rem;
+    width: 250px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+    font-family: 'Poppins', sans-serif;
+}
+
+.mode-button:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 25px rgba(0,0,0,0.1);
+    border-color: var(--color-accent);
+}
+
+.mode-button h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.5rem;
+    color: var(--color-accent);
+}
+
+.mode-button p {
+    margin: 0;
+    font-size: 1rem;
+    color: var(--color-text);
+}
+
+#lobby-title {
+    color: #777;
+    margin-bottom: 1rem;
 }
 
 .lobby-forms {
@@ -80,6 +127,8 @@ body {
     background-color: #8a655d;
 }
 
+/* --- Área de Jogo --- */
+
 .game-container {
     text-align: center;
     background-color: white;
@@ -88,7 +137,7 @@ body {
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
     position: relative;
     width: 95%;
-    max-width: 600px;
+    max-width: 900px; /* Aumentado para acomodar os painéis de equipe */
     box-sizing: border-box;
     margin: 1rem auto;
 }
@@ -104,29 +153,54 @@ h1 {
     margin-bottom: 1rem;
 }
 
-.game-info {
+.game-info-teams {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    max-width: 550px;
+    align-items: flex-start;
+    gap: 1rem;
+    max-width: 800px;
     margin: 1rem auto;
 }
 
-.player-info, .turn-status {
+.team-panel {
+    background-color: var(--color-bg);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    width: 40%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+.team-panel h3 {
+    margin: 0 0 1rem 0;
+    font-size: 1.3rem;
+    border-bottom: 3px solid;
+    padding-bottom: 0.5rem;
+    text-align: center;
+}
+
+.team-red h3 { color: var(--color-pawn1); border-color: var(--color-pawn1); }
+.team-blue h3 { color: var(--color-pawn2); border-color: var(--color-pawn2); }
+
+.player-info {
+    background-color: #fff;
+    text-align: left;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.player-info h4, .player-info p { margin: 0; }
+#player1-info, #player3-info { border-left: 5px solid var(--color-pawn1); }
+#player2-info, #player4-info { border-left: 5px solid var(--color-pawn2); }
+
+.turn-status {
     padding: 0.5rem 1.5rem;
     border-radius: var(--border-radius);
     background-color: var(--color-bg);
-    transition: transform 0.3s ease;
+    align-self: center;
 }
-
-.player-info h2 { 
-    margin: 0 0 0.25rem 0; 
-    font-size: 1.2rem; 
-}
-
-.player-info p { margin: 0; }
-#player1-info { border-bottom: 5px solid var(--color-pawn1); }
-#player2-info { border-bottom: 5px solid var(--color-pawn2); }
 
 #board-container {
     display: flex;
@@ -163,6 +237,8 @@ h1 {
 }
 .pawn1 { background-color: var(--color-pawn1); }
 .pawn2 { background-color: var(--color-pawn2); }
+.pawn3 { background-color: var(--color-pawn3); }
+.pawn4 { background-color: var(--color-pawn4); }
 
 .wall-space {
     position: absolute;
@@ -184,10 +260,14 @@ h1 {
     opacity: 1;
     cursor: not-allowed;
 }
-.wall-space.p1-wall { background-color: var(--color-pawn1); }
-.wall-space.p2-wall { background-color: var(--color-pawn2); }
+.wall-space.red-wall { background-color: var(--color-pawn1); }
+.wall-space.blue-wall { background-color: var(--color-pawn2); }
 
-.controls { margin-top: 2rem; }
+/* --- Controles, Pop-ups e Responsividade --- */
+
+.controls { 
+    margin-top: 2rem; 
+}
 #restart-button {
     background-color: var(--color-accent);
     color: white;
@@ -199,7 +279,9 @@ h1 {
     cursor: pointer;
     transition: background-color 0.2s;
 }
-#restart-button:hover { background-color: #8a655d; }
+#restart-button:hover {
+    background-color: #8a655d;
+}
 
 #victory-popup {
     position: absolute;
@@ -231,8 +313,18 @@ h1 {
 }
 
 @media (max-width: 700px) {
-    .lobby-forms {
+    .lobby-forms, .mode-options {
         flex-direction: column;
+    }
+}
+@media (max-width: 850px) { /* Novo breakpoint para os painéis de times */
+    .game-info-teams {
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+    }
+    .team-panel {
+        width: 80%;
     }
 }
 @media (max-width: 600px) {
@@ -250,103 +342,36 @@ h1 {
         font-size: 1.8rem;
         margin-top: 0;
     }
-    .game-info {
-        flex-direction: column;
-        gap: 0.8rem;
-    }
-    .player-info, .turn-status {
-        width: 100%;
-        box-sizing: border-box;
-        padding: 0.5rem;
-    }
 }
 
-/* public/style.css -> Adicione no final */
+/* Adicione estas novas regras ao seu style.css */
 
-/* NOVO: Estilos para o botão e o modal de regras */
-
-.rules-button {
-    background-color: transparent;
-    color: var(--color-accent);
-    border: 2px solid var(--color-accent);
-    padding: 0.5rem 1rem;
-    font-size: 0.9rem;
-    font-family: 'Poppins', sans-serif;
-    border-radius: var(--border-radius);
-    cursor: pointer;
-    transition: all 0.2s;
-    margin-top: 1rem;
-}
-
-.rules-button:hover {
-    background-color: var(--color-accent);
-    color: white;
-}
-
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.6);
+.lobby-header {
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1000;
-    opacity: 1;
-    transition: opacity 0.3s ease;
+    position: relative; /* Contexto para o botão */
+    width: 100%;
 }
 
-.modal-overlay.hidden {
-    opacity: 0;
-    pointer-events: none;
-}
-
-.modal-content {
-    background: white;
-    padding: 2rem;
-    border-radius: var(--border-radius);
-    width: 90%;
-    max-width: 600px;
-    max-height: 80vh;
-    overflow-y: auto;
-    position: relative;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-    transform: scale(1);
-    transition: transform 0.3s ease;
-}
-
-.modal-overlay.hidden .modal-content {
-    transform: scale(0.9);
-}
-
-.modal-close-btn {
+.back-button {
     position: absolute;
-    top: 10px;
-    right: 15px;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
     background: transparent;
-    border: none;
-    font-size: 2.5rem;
-    color: #aaa;
+    border: 1px solid #ccc;
+    color: #888;
+    padding: 0.5rem 1rem;
+    border-radius: var(--border-radius);
     cursor: pointer;
-    line-height: 1;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.9rem;
+    transition: all 0.2s;
 }
-.modal-close-btn:hover {
+
+.back-button:hover {
+    background-color: #f0f0f0;
     color: #333;
-}
-
-.modal-content h2 {
-    margin-top: 0;
-    color: var(--color-accent);
-}
-
-.modal-content ul {
-    padding-left: 20px;
-    text-align: left;
-}
-
-.modal-content li {
-    margin-bottom: 0.8rem;
-    line-height: 1.5;
+    border-color: #aaa;
 }
