@@ -9,7 +9,7 @@ const server = http.createServer(app);
 
 const io = socketIo(server, {
     cors: {
-        origin: "*", // Para produção, restrinja ao URL do seu site (ex: "https://meu-quoridor.onrender.com")
+        origin: "*",
         methods: ["GET", "POST"]
     }
 });
@@ -49,8 +49,11 @@ function createInitialGameState(mode) {
     return baseState;
 }
 
+// #####################################################################
+// ##               FUNÇÃO CORRIGIDA PARA O BUG DE PULO               ##
+// #####################################################################
 function getValidPawnMoves(gameState, player) {
-    const allPawns = gameState.players.map(p => p.pawnPosition);
+    const allPlayers = gameState.players;
     const validMoves = [];
     const { row, col } = player.pawnPosition;
     const potentialMoves = [{ r: -1, c: 0 }, { r: 1, c: 0 }, { r: 0, c: -1 }, { r: 0, c: 1 }];
@@ -59,19 +62,31 @@ function getValidPawnMoves(gameState, player) {
         const newRow = row + move.r;
         const newCol = col + move.c;
 
-        if (newRow >= 0 && newRow <= 8 && newCol >= 0 && newCol <= 8) {
-            if (isWallBetween(gameState, { row, col }, { row: newRow, col: newCol })) continue;
+        // 1. Verifica se está dentro do tabuleiro e se não há uma barreira direta
+        if (newRow >= 0 && newRow <= 8 && newCol >= 0 && newCol <= 8 && !isWallBetween(gameState, { row, col }, { row: newRow, col: newCol })) {
             
-            const isOccupied = allPawns.some(p => p.row === newRow && p.col === newCol);
-            if (isOccupied) {
-                // A lógica de pulo para 4 jogadores é mais complexa e pode ser adicionada depois
+            // 2. Verifica se a casa de destino está ocupada por algum outro peão
+            const occupyingPawn = allPlayers.find(p => p.pawnPosition.row === newRow && p.pawnPosition.col === newCol);
+
+            if (occupyingPawn) {
+                // 3. Se estiver ocupada, calcula a posição do pulo
+                const jumpRow = newRow + move.r;
+                const jumpCol = newCol + move.c;
+
+                // 4. Verifica se o pulo é válido (dentro do tabuleiro e sem barreira ATRÁS do oponente)
+                if (jumpRow >= 0 && jumpRow <= 8 && jumpCol >= 0 && jumpCol <= 8 && !isWallBetween(gameState, { row: newRow, col: newCol }, { row: jumpRow, col: jumpCol })) {
+                    validMoves.push({ row: jumpRow, col: jumpCol });
+                }
+                // (Aqui entraria a lógica mais complexa para pulos diagonais se o oponente estiver bloqueado)
             } else {
+                // 5. Se a casa estiver livre, é um movimento normal válido
                 validMoves.push({ row: newRow, col: newCol });
             }
         }
     }
     return validMoves;
 }
+// #####################################################################
 
 function isWallBetween(gameState, pos1, pos2) {
     if (pos1.col === pos2.col) {
