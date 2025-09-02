@@ -163,8 +163,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const currentPlayerPanel = document.getElementById(`player${currentPlayerIndex + 1}-info`);
             if (currentPlayerPanel) currentPlayerPanel.style.transform = 'scale(1.05)';
         }
-        
-        // REMOVIDO: A linha clearSelection() foi removida daqui para corrigir o bug.
     }
     
     function createBoard() {
@@ -279,7 +277,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 clearSelection();
             } else {
                 clearSelection();
-                selectedMove = { type: 'wall', element: wallSpace, wallType: wall.type, ...wall };
+                // AQUI ESTÁ A CORREÇÃO:
+                // Construímos o objeto explicitamente para não sobrescrever a propriedade 'type'.
+                selectedMove = { 
+                    type: 'wall', 
+                    element: wallSpace, 
+                    wallType: wall.type, 
+                    row: wall.row, 
+                    col: wall.col 
+                };
                 wallSpace.classList.add('selected');
             }
         } else {
