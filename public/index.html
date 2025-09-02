@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="pt-br">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,7 +9,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 </head>
-
 <body>
     <main id="mode-selection" class="lobby-container">
         <h1>Quoridor Online</h1>
@@ -33,6 +31,7 @@
             <h1>Quoridor Online</h1>
         </div>
         <h2 id="lobby-title"></h2>
+        <button id="rules-btn" class="rules-button">📜 Ver Regras</button>
         <div class="lobby-forms">
             <form id="create-room-form" class="lobby-form">
                 <h2>Criar uma Sala</h2>
@@ -48,6 +47,29 @@
                 <input type="password" id="join-room-password" placeholder="Senha da Sala" required>
                 <button type="submit">Entrar</button>
             </form>
+        </div>
+
+        <div id="rules-modal" class="modal-overlay hidden">
+            <div class="modal-content">
+                <button id="modal-close-btn" class="modal-close-btn">&times;</button>
+                <h2>Regras do Quoridor</h2>
+                <ul>
+                    <li><strong>Objetivo:</strong> Ser o primeiro jogador a alcançar a linha de partida do oponente.</li>
+                    <li><strong>No seu turno, escolha UMA ação:</strong>
+                        <ul>
+                            <li><strong>Mover seu peão:</strong> Mova uma casa na horizontal ou vertical (nunca na diagonal).</li>
+                            <li><strong>Colocar uma barreira:</strong> Posicione uma barreira entre as casas para bloquear o caminho.</li>
+                        </ul>
+                    </li>
+                    <li><strong>Regras das Barreiras:</strong>
+                        <ul>
+                            <li>Cada barreira bloqueia o espaço de duas casas.</li>
+                            <li>Você começa com 10 (1v1) ou 5 (2v2) barreiras.</li>
+                            <li><strong>Regra Crucial:</strong> É proibido colocar uma barreira que feche completamente o último caminho do seu oponente.</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
         </div>
     </main>
 
@@ -65,11 +87,9 @@
                     <p>Barreiras: <span id="p3-walls">5</span></p>
                 </div>
             </div>
-
             <div class="turn-status" id="turn-status">
                 <p>Aguardando jogadores...</p>
             </div>
-
             <div class="team-panel team-blue">
                 <h3>Time Azul</h3>
                 <div class="player-info" id="player2-info">
@@ -82,15 +102,12 @@
                 </div>
             </div>
         </div>
-
         <div id="board-container">
             <div id="board"></div>
         </div>
-
         <div class="controls">
             <button id="restart-button">Sair da Sala</button>
         </div>
-
         <div id="victory-popup" class="hidden">
             <div class="popup-content">
                 <h2 id="victory-title">Vitória!</h2>
@@ -102,5 +119,4 @@
     <script src="/socket.io/socket.io.js"></script>
     <script src="script.js"></script>
 </body>
-
 </html>
